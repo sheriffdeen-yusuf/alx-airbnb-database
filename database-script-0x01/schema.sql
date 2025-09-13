@@ -1,63 +1,114 @@
--- schema.sql
-
 -- ========================
--- Airbnb Database Schema
+-- Airbnb Database Schema (PostgreSQL)
 -- ========================
 
--- 1. User Table
+-- Enable UUID generation
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ========================
+-- ENUM Types
+-- ========================
+CREATE TYPE user_role AS ENUM ('guest', 'host', 'admin');
+CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'canceled');
+CREATE TYPE payment_method AS ENUM ('credit_card', 'paypal', 'stripe');
+
+-- ========================
+-- Tables
+-- ========================
+
+-- 1. Users Table
 CREATE TABLE users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    role ENUM('guest', 'host') NOT NULL
+    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20),
+    role user_role NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Property Table
+-- 2. Properties Table
 CREATE TABLE properties (
-    property_id INT PRIMARY KEY AUTO_INCREMENT,
-    host_id INT NOT NULL,
-    title VARCHAR(200) NOT NULL,
+    property_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    host_id UUID NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
     location VARCHAR(200) NOT NULL,
-    description TEXT,
-    price DECIMAL(10,2) NOT NULL,
+    pricepernight DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 3. Booking Table
+-- 3. Bookings Table
 CREATE TABLE bookings (
-    booking_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    property_id INT NOT NULL,
+    booking_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    property_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    status ENUM('pending', 'confirmed', 'cancelled') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE
+    total_price DECIMAL(10,2) NOT NULL,
+    status booking_status NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 4. Review Table
-CREATE TABLE reviews (
-    review_id INT PRIMARY KEY AUTO_INCREMENT,
-    booking_id INT UNIQUE NOT NULL,
-    rating INT CHECK (rating BETWEEN 1 AND 5),
-    comment TEXT,
-    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
-);
-
--- 5. Payment Table
+-- 4. Payments Table
 CREATE TABLE payments (
-    payment_id INT PRIMARY KEY AUTO_INCREMENT,
-    booking_id INT UNIQUE NOT NULL,
+    payment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id UUID NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    payment_date DATE NOT NULL,
-    payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_method payment_method NOT NULL,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id) ON DELETE CASCADE
 );
 
+-- 5. Reviews Table
+CREATE TABLE reviews (
+    review_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    property_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (property_id) REFERENCES properties(property_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 6. Messages Table
+CREATE TABLE messages (
+    message_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sender_id UUID NOT NULL,
+    recipient_id UUID NOT NULL,
+    message_body TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (recipient_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 -- ========================
--- Indexes for performance
+-- Indexes for Performance
 -- ========================
-CREATE INDEX idx_user_email ON users(email);
-CREATE INDEX idx_property_location ON properties(location);
-CREATE INDEX idx_booking_status ON bookings(status);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_properties_host_id ON properties(host_id);
+CREATE INDEX idx_bookings_property_id ON bookings(property_id);
+CREATE INDEX idx_bookings_user_id ON bookings(user_id);
+CREATE INDEX idx_payments_booking_id ON payments(booking_id);
+
+-- ========================
+-- Trigger to auto-update "updated_at"
+-- ========================
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_properties_modtime
+BEFORE UPDATE ON properties
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
