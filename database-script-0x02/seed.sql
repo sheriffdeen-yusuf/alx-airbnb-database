@@ -14,19 +14,49 @@ VALUES
 (gen_random_uuid(), 'Bob', 'Smith', 'bob@example.com', 'hashed_pw2', '08087654321', 'host'::user_role),
 (gen_random_uuid(), 'Charlie', 'Adams', 'charlie@example.com', 'hashed_pw3', '08011223344', 'host'::user_role),
 (gen_random_uuid(), 'Diana', 'Moses', 'diana@example.com', 'hashed_pw4', '08099887766', 'guest'::user_role),
-(gen_random_uuid(), 'Admin', 'User', 'admin@example.com', 'hashed_pw5', NULL, 'admin'::user_role);
+(gen_random_uuid(), 'Admin', 'User', 'admin@example.com', 'hashed_pw5', NULL, 'admin'::user_role),
+(gen_random_uuid(), 'Emily', 'Brown', 'emily@example.com', 'hashed_pw6', '08055554444', 'guest'),
+(gen_random_uuid(), 'Frank', 'Taylor', 'frank@example.com', 'hashed_pw7', '08066667777', 'guest'),
+(gen_random_uuid(), 'Grace', 'Williams', 'grace@example.com', 'hashed_pw8', '08077778888', 'guest');
 
 -- ============================
--- Insert Properties
+-- Insert Properties (extended)
 -- ============================
 INSERT INTO properties (property_id, host_id, name, description, location, pricepernight)
 SELECT 
-    gen_random_uuid(), user_id, 'Cozy Apartment', '2-bedroom apartment in Lagos, close to city center', 'Lagos, Nigeria', 20000.00
+    gen_random_uuid(), user_id, 'Cozy Apartment', 
+    '2-bedroom apartment in Lagos, close to city center', 
+    'Lagos, Nigeria', 20000.00
 FROM users WHERE email = 'bob@example.com'
+
 UNION ALL
 SELECT 
-    gen_random_uuid(), user_id, 'Beachfront Villa', 'Luxury villa near the beach with private pool', 'Accra, Ghana', 80000.00
-FROM users WHERE email = 'charlie@example.com';
+    gen_random_uuid(), user_id, 'Beachfront Villa', 
+    'Luxury villa near the beach with private pool', 
+    'Accra, Ghana', 80000.00
+FROM users WHERE email = 'charlie@example.com'
+
+UNION ALL
+SELECT 
+    gen_random_uuid(), user_id, 'Mountain Cabin', 
+    'Secluded wooden cabin with fireplace and scenic views', 
+    'Jos, Nigeria', 15000.00
+FROM users WHERE email = 'bob@example.com'
+
+UNION ALL
+SELECT 
+    gen_random_uuid(), user_id, 'City Loft', 
+    'Modern loft apartment near downtown with rooftop access', 
+    'Nairobi, Kenya', 30000.00
+FROM users WHERE email = 'charlie@example.com'
+
+UNION ALL
+SELECT 
+    gen_random_uuid(), user_id, 'Desert Retreat', 
+    'Quiet desert home perfect for stargazing and meditation', 
+    'Sahara, Morocco', 25000.00
+FROM users WHERE email = 'bob@example.com';
+
 
 -- ============================
 -- Insert Bookings
@@ -64,7 +94,7 @@ WHERE u.email = 'alice@example.com' AND p.name = 'Cozy Apartment'
 UNION ALL
 SELECT gen_random_uuid(), p.property_id, u.user_id, 4, 'Great location but could improve amenities'
 FROM users u, properties p
-WHERE u.email = 'diana@example.com' AND p.name = 'Beachfront Villa';
+WHERE u.email = 'diana@example.com' AND p.name = ' Villa';
 
 -- ============================
 -- Insert Messages
