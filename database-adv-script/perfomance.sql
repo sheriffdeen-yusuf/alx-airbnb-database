@@ -8,7 +8,7 @@ SELECT
     p.name AS property_name,
     p.description AS property_description,
     py.payment_method
-FROM bookings b
+FROM bookings b WHERE start_date >= '2025-09-01' AND end_date <= '2025-12-31'
 LEFT JOIN users u ON u.user_id = b.user_id
 LEFT JOIN properties p ON p.property_id = b.property_id
 LEFT JOIN payments py ON py.booking_id = b.booking_id
