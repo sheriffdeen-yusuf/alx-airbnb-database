@@ -66,9 +66,20 @@ SELECT gen_random_uuid(), p.property_id, u.user_id, DATE '2025-09-01', DATE '202
 FROM users u, properties p
 WHERE u.email = 'alice@example.com' AND p.name = 'Cozy Apartment'
 UNION ALL
+SELECT gen_random_uuid(), p.property_id, u.user_id, DATE '2025-09-11', DATE '2025-09-15', 80000.00, 'confirmed'::booking_status
+FROM users u, properties p
+WHERE u.email = 'alice@example.com' AND p.name = 'Beachfront Villa'
+UNION ALL
+SELECT gen_random_uuid(), p.property_id, u.user_id, DATE '2025-09-11', DATE '2025-09-15', 80000.00, 'confirmed'::booking_status
+FROM users u, properties p
+WHERE u.email = 'alice@example.com' AND p.name = 'Beachfront Villa'
+UNION ALL 
 SELECT gen_random_uuid(), p.property_id, u.user_id, DATE '2025-10-10', DATE '2025-10-15', 400000.00, 'pending'::booking_status
 FROM users u, properties p
 WHERE u.email = 'diana@example.com' AND p.name = 'Beachfront Villa';
+SELECT gen_random_uuid(), p.property_id, u.user_id, DATE '2025-10-10', DATE '2025-10-15', 400000.00, 'pending'::booking_status
+FROM users u, properties p
+WHERE u.email = 'grace@example.com' AND p.name = 'Desert Retreat';
 
 -- ============================
 -- Insert Payments
@@ -94,8 +105,15 @@ WHERE u.email = 'alice@example.com' AND p.name = 'Cozy Apartment'
 UNION ALL
 SELECT gen_random_uuid(), p.property_id, u.user_id, 4, 'Great location but could improve amenities'
 FROM users u, properties p
-WHERE u.email = 'diana@example.com' AND p.name = ' Villa';
-
+WHERE u.email = 'diana@example.com' AND p.name = 'City Loft';
+UNION ALL
+SELECT gen_random_uuid(), p.property_id, u.user_id, 2, 'Not as expected, needs maintenance'
+FROM users u, properties p
+WHERE u.email = 'emily@example.com' AND p.name = 'Mountain Cabin'
+UNION ALL
+SELECT gen_random_uuid(), p.property_id, u.user_id, 3, 'Decent stay, average experience'
+FROM users u, properties p
+WHERE u.email = 'grace@example.com' AND p.name = 'Cozy Apartment';
 -- ============================
 -- Insert Messages
 -- ============================
